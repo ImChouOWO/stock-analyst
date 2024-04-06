@@ -1,5 +1,13 @@
 # stock-analyst
 
+## 目標 | Purpose 
+> 嘗試利用語言模型之特性使其了解台灣股市市場
+
+> leading LLM to understand the Taiwan's stock market.
+
+>  the prompt will be composed of specific stock informations and news.
+
+
 ### 必要模組 | necessary model
 ```
 pip install requests
