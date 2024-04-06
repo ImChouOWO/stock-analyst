@@ -6,9 +6,10 @@ import yfinance as yf
 import numpy as np
 import time
 import os
-
+from bs4 import BeautifulSoup
 
 class Stocker:
+
     def __init__(self,stock_list:list) -> None:
         self.stock_list = stock_list
         self.review = 5
@@ -19,7 +20,9 @@ class Stocker:
         self.market_close_data = None
         self.news_data = None
         self.unusual_info_data = None
-    def fetch_data(self,url):
+
+    
+    def fetch_data(self,url:str):
         res = requests.get(url)
         # 判斷該API呼叫是否成功
         if res.status_code != 200:
@@ -100,6 +103,7 @@ class Stocker:
                       self.market_close_data,
                       self.news_data,
                       self.unusual_info_data]
+        
         names = ["個股資料",
                  "個股歷史資訊",
                  "大盤昨日資訊",
@@ -118,14 +122,66 @@ class Stocker:
                 except:
                     df_string=df
                 file.write(f"DataFrame {names[i]}:\n{df_string}\n\n")
-                                                                                                    
+
+
+    
+
+    def fetch_news_web(self,url,class_name,web_tag):
+        res = requests.get(url)
+        res.raise_for_status()
+
+        try:
+            soup = BeautifulSoup(res.content,"lxml")
+            if class_name:
+                elements = soup.find_all(web_tag,class_name)
+            else:
+                elements = soup.find_all(web_tag)
+            
+        except:
+            elements = "fetch fail"
+
+        return elements  
+
+
+    def news_format(self,search_text_list:list,web_tag:str,class_name:str,directory:str):
+    
+        for search_text in search_text_list:
+
+            url = f"https://tw.news.yahoo.com/search?p={search_text}"
+            get_elements = self.fetch_news_web(url=url,class_name=class_name,web_tag=web_tag)
+            data = []
+            for element in get_elements:
+                data.append(element.text.strip())
+
+            news_df = pd.DataFrame(data)
+            news_df.columns = ['title']
+
+            self.save_dataframe(df=news_df,stock=search_text,directory=directory)
+        
+    def save_dataframe(self,df:pd.DataFrame,stock:str,directory:str):
+      
+        file_name = f"{stock}_{time.strftime('%Y-%m-%d')}_news.xlsx"
+        file_path = f"{directory}/{file_name}"
+        os.makedirs(directory,exist_ok=True)
+        df.to_excel(file_path,index=False)
+      
+    
+
     def main(self):
+        # get form 臺灣證券交易所 OpenAPI
+        # ---start---
         self.get_data()
-        self.get_history()
         self.get_news()
         self.market_close()
         self.unusual_info()
-        self.dataframe_to_txt()
+        # ---end---
+        # self.get_history()
+
+        # self.dataframe_to_txt()
+        
+
+        # get the news from Yahoo finace 
+        self.news_format(search_text_list=self.stock_list ,web_tag="h3" ,class_name="Mb(5px)" ,directory="csv")
 
           
 if __name__ == "__main__":
