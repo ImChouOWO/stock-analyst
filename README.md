@@ -13,7 +13,7 @@ pip install beautifulsoup4
 [Yahoo TW 新聞](https://tw.news.yahoo.com)
 
 ### 代辦事項 |todo list
--[] 加入LLM功能 | add LLM into the project
+- [ ] 加入LLM功能 | add LLM into the project
 
 ### 當前限制 | current limitations
 > 由於種種因素本專案尚暫時無法加入LLM之功能
