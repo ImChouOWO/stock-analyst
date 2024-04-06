@@ -18,6 +18,7 @@ pip install beautifulsoup4
 ```
 ### 資料來源 | data source
 [台灣證券交易所](https://openapi.twse.com.tw/)
+
 [Yahoo TW 新聞](https://tw.news.yahoo.com)
 
 ### 代辦事項 |todo list
