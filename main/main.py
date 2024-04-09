@@ -7,6 +7,8 @@ import numpy as np
 import time
 import os
 from bs4 import BeautifulSoup
+from openai import OpenAI
+
 
 class Stocker:
 
@@ -20,6 +22,7 @@ class Stocker:
         self.market_close_data = None
         self.news_data = None
         self.unusual_info_data = None
+        self.prompt = None
 
     
     def fetch_data(self,url:str):
@@ -97,6 +100,11 @@ class Stocker:
 
         print(self.unusual_info_data)
 
+    def read_file(self,file_path):
+        with open(file_path,"r") as file:
+            return file.read()
+
+
     def dataframe_to_txt(self):
         dataframes = [self.stock_data,
                       self.history_data,
@@ -122,7 +130,10 @@ class Stocker:
                 except:
                     df_string=df
                 file.write(f"DataFrame {names[i]}:\n{df_string}\n\n")
-
+        
+        txt_content = self.read_file(file_path)
+        self.prompt = f'{self.stock_list}的相關走勢，以下是個股的相關資訊，{txt_content}'
+    
 
     
 
@@ -164,25 +175,48 @@ class Stocker:
         file_path = f"{directory}/{file_name}"
         os.makedirs(directory,exist_ok=True)
         df.to_excel(file_path,index=False)
-      
+    
+    def ask_gpt(self):
+        client = OpenAI(
+            api_key = "open_ai_api_key"
+        )
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+            "role": "system",
+            "content": "你現在是一個專業的股票分析師，會以我提供的資料為基礎回答我的問題，並在最後透過表格的方式將我詢問的股票以你分析的最佳進出場價格呈現出來"
+            },
+            {
+            "role": "user",
+            "content": f'{self.prompt}'
+            }
+        ],
+        temperature=1,
+        max_tokens=256,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+        )
     
 
     def main(self):
         # get form 臺灣證券交易所 OpenAPI
-        # ---start---
         self.get_data()
         self.get_news()
         self.market_close()
         self.unusual_info()
-        # ---end---
-        # self.get_history()
 
-        # self.dataframe_to_txt()
+        # get form yfinance
+        self.get_history()
+
+        self.dataframe_to_txt()
         
-
         # get the news from Yahoo finace 
         self.news_format(search_text_list=self.stock_list ,web_tag="h3" ,class_name="Mb(5px)" ,directory="csv")
+        
 
+        # self.ask_gpt()
           
 if __name__ == "__main__":
     stocker  = Stocker(['0050', '0056', '2330', '00940', '1216'])
